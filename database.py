@@ -8,16 +8,20 @@ def get_db_connection():
         print("CRITICAL: DATABASE_URL is not set.")
         return None
         
-    # Fix common typos in URL
-    if db_url.startswith("postgresq1://"):
-        db_url = db_url.replace("postgresq1://", "postgresql://", 1)
-        print("INFO: Corrected 'postgresq1' typo in DATABASE_URL")
-    elif db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # Standardize URL and fix typos
+    db_url = db_url.replace("postgresq1://", "postgresql://", 1)
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    
+    # Ensure SSL is enabled (required by Neon)
+    if "?" not in db_url:
+        db_url += "?sslmode=require"
+    elif "sslmode=" not in db_url:
+        db_url += "&sslmode=require"
         
     try:
         connection = psycopg2.connect(db_url)
         return connection
     except psycopg2.Error as err:
         print(f"CRITICAL Database connection error: {err}")
+        print(f"DEBUG: Attempted URL starts with: {db_url[:20]}...")
         return None
