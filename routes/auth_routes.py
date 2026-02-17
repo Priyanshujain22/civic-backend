@@ -38,14 +38,22 @@ def login():
     password = data.get('password')
     
     user = User.get_by_email(email)
+    print(f"DEBUG: Login attempt for email: {email}")
     
     # Check hashed password, or plain text for initial default users
     is_valid = False
     if user:
+        print(f"DEBUG: User found in DB for {email}")
         if check_password_hash(user['password'], password):
             is_valid = True
+            print("DEBUG: Password match via hash")
         elif user['password'] == password: # Fallback for plain text default users
             is_valid = True
+            print("DEBUG: Password match via plain text")
+        else:
+            print("DEBUG: Password DOES NOT match")
+    else:
+        print(f"DEBUG: No user found for email: {email}")
             
     if not is_valid:
         return error_response("Invalid credentials", 401)
