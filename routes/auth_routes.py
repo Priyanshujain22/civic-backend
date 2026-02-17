@@ -37,13 +37,13 @@ def login():
     email = data.get('email')
     password = data.get('password')
     
-    user = User.get_by_email(email)
     print(f"DEBUG: Login attempt for email: {email}")
+    user = User.get_by_email(email)
     
     # Check hashed password, or plain text for initial default users
     is_valid = False
     if user:
-        print(f"DEBUG: User found in DB for {email}")
+        print(f"DEBUG: User object retrieved for {email}")
         if check_password_hash(user['password'], password):
             is_valid = True
             print("DEBUG: Password match via hash")
@@ -53,7 +53,15 @@ def login():
         else:
             print("DEBUG: Password DOES NOT match")
     else:
-        print(f"DEBUG: No user found for email: {email}")
+        # Check if it was a connection error or just no user
+        from database import get_db_connection
+        test_conn = get_db_connection()
+        if not test_conn:
+            print(f"DEBUG: DATABASE CONNECTION FAILED for login attempt: {email}")
+            return error_response("Server database connection error", 500)
+        else:
+            test_conn.close()
+            print(f"DEBUG: No user found in DB for email: {email}")
             
     if not is_valid:
         return error_response("Invalid credentials", 401)
