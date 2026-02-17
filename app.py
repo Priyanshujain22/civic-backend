@@ -15,7 +15,7 @@ from routes.officer_routes import officer_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app, resources={r"/api/*": {"origins": "*"}})  # Enable CORS for frontend communication with explicit resource matching
 
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')

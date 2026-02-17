@@ -7,5 +7,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev_secret_key'
     DATABASE_URL = os.environ.get('DATABASE_URL')
     
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL environment variable is not set. Check your .env file.")
+    @staticmethod
+    def validate():
+        if not Config.DATABASE_URL:
+            print("WARNING: DATABASE_URL environment variable is not set.")
+            return False
+        return True
