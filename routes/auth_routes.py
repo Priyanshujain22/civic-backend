@@ -39,7 +39,15 @@ def login():
     
     user = User.get_by_email(email)
     
-    if not user or not check_password_hash(user['password'], password):
+    # Check hashed password, or plain text for initial default users
+    is_valid = False
+    if user:
+        if check_password_hash(user['password'], password):
+            is_valid = True
+        elif user['password'] == password: # Fallback for plain text default users
+            is_valid = True
+            
+    if not is_valid:
         return error_response("Invalid credentials", 401)
 
     # Generate Token
