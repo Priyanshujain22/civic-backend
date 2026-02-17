@@ -7,6 +7,8 @@ def get_db_connection():
     if not db_url:
         print("CRITICAL: DATABASE_URL is not set.")
         return None
+    
+    db_url = db_url.strip()
         
     # Standardize URL and fix typos (handle postgresq1, postgres, etc.)
     import re
