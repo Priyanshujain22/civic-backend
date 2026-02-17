@@ -28,5 +28,15 @@ app.register_blueprint(officer_bp, url_prefix='/api/officer')
 def home():
     return {"message": "Civic Complaint System API is Running"}
 
+@app.route('/api/db-check')
+def db_check():
+    from database import get_db_connection
+    conn = get_db_connection()
+    if conn:
+        conn.close()
+        return {"status": "success", "message": "Database connection successful"}, 200
+    else:
+        return {"status": "error", "message": "Database connection failed. Check server logs."}, 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

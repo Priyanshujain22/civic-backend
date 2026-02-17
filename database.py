@@ -8,20 +8,22 @@ def get_db_connection():
         print("CRITICAL: DATABASE_URL is not set.")
         return None
         
-    # Standardize URL and fix typos
-    db_url = db_url.replace("postgresq1://", "postgresql://", 1)
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # Standardize URL and fix typos (handle postgresq1, postgres, etc.)
+    import re
+    db_url = re.sub(r'^postgres(q1)?://', 'postgresql://', db_url)
     
     # Ensure SSL is enabled (required by Neon)
-    if "?" not in db_url:
-        db_url += "?sslmode=require"
-    elif "sslmode=" not in db_url:
-        db_url += "&sslmode=require"
+    if "sslmode=" not in db_url:
+        separator = "&" if "?" in db_url else "?"
+        db_url += f"{separator}sslmode=require"
         
     try:
-        connection = psycopg2.connect(db_url)
+        # Set a short timeout for the connection attempt
+        connection = psycopg2.connect(db_url, connect_timeout=10)
         return connection
-    except psycopg2.Error as err:
-        print(f"CRITICAL Database connection error: {err}")
-        print(f"DEBUG: Attempted URL starts with: {db_url[:20]}...")
+    except Exception as err:
+        print(f"CRITICAL Database connection error: {type(err).__name__}: {err}")
+        # Only log the start of the URL for privacy, but enough to see the host
+        clean_url_start = db_url.split('@')[-1] if '@' in db_url else db_url[:30]
+        print(f"DEBUG: Attempted connection to host part: {clean_url_start}")
         return None
