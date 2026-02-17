@@ -20,6 +20,7 @@ def update_status():
     data = request.json
     complaint_id = data.get('id')
     status = data.get('status')
+    resolution_notes = data.get('resolution_notes')
 
     if not complaint_id or not status:
         return error_response("Complaint ID and Status required", 400)
@@ -27,7 +28,7 @@ def update_status():
     if status not in ['In Progress', 'Resolved']:
         return error_response("Invalid status", 400)
 
-    if Complaint.update_status(complaint_id, status):
+    if Complaint.update_status(complaint_id, status, resolution_notes):
         return success_response(message="Status updated successfully")
     else:
         return error_response("Update failed", 500)

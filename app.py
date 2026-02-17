@@ -24,6 +24,26 @@ app.register_blueprint(complaint_bp, url_prefix='/api')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(officer_bp, url_prefix='/api/officer')
 
+# Auto-migration for resolution_notes column
+def run_migrations():
+    from database import get_db_connection
+    conn = get_db_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            ALTER TABLE complaints 
+            ADD COLUMN IF NOT EXISTS resolution_notes TEXT;
+        """)
+        conn.commit()
+    except Exception as e:
+        print(f"Migration error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+run_migrations()
+
 @app.route('/')
 def home():
     return {"message": "Civic Complaint System API is Running"}

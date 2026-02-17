@@ -81,13 +81,17 @@ class Complaint:
         return data
 
     @staticmethod
-    def update_status(id, status):
+    def update_status(id, status, resolution_notes=None):
         conn = get_db_connection()
         if not conn: return False
         try:
             cursor = conn.cursor()
-            query = "UPDATE complaints SET status = %s WHERE id = %s"
-            cursor.execute(query, (status, id))
+            if status == 'Resolved' and resolution_notes:
+                query = "UPDATE complaints SET status = %s, resolution_notes = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+                cursor.execute(query, (status, resolution_notes, id))
+            else:
+                query = "UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+                cursor.execute(query, (status, id))
             conn.commit()
             return True
         except Exception as e:
