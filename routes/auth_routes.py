@@ -3,8 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 from config import Config
-from ..utils.response import success_response, error_response
-from ..models.user_model import User
+from utils.response import success_response, error_response
+from models.user_model import User
 
 auth_bp = Blueprint('auth', __name__)
 

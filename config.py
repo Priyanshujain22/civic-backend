@@ -2,7 +2,4 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev_secret_key'
-    MYSQL_HOST = os.environ.get('DB_HOST') or 'localhost'
-    MYSQL_USER = os.environ.get('DB_USER') or 'root'
-    MYSQL_PASSWORD = os.environ.get('DB_PASSWORD') or 'password'
-    MYSQL_DB = os.environ.get('DB_NAME') or 'civic_complaint_system'
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'postgresql://neondb_owner:npg_Mv0yS1LOdiYR@ep-sparkling-waterfall-a1uwiaaq-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'

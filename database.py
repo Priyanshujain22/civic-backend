@@ -1,15 +1,11 @@
-import mysql.connector
+import psycopg2
+import psycopg2.extras
 from config import Config
 
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(
-            host=Config.MYSQL_HOST,
-            user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
-        )
+        connection = psycopg2.connect(Config.DATABASE_URL)
         return connection
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
+    except psycopg2.Error as err:
+        print(f"Database connection error: {err}")
         return None

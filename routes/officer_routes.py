@@ -1,7 +1,7 @@
 from flask import Blueprint, request
-from ..utils.response import success_response, error_response
-from ..utils.auth_middleware import token_required, role_required
-from ..models.complaint_model import Complaint
+from utils.response import success_response, error_response
+from utils.auth_middleware import token_required, role_required
+from models.complaint_model import Complaint
 
 officer_bp = Blueprint('officer', __name__)
 

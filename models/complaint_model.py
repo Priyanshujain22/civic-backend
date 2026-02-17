@@ -1,4 +1,5 @@
-from ..database import get_db_connection
+import psycopg2.extras
+from database import get_db_connection
 
 class Complaint:
     @staticmethod
@@ -9,25 +10,25 @@ class Complaint:
             cursor = conn.cursor()
             query = """
                 INSERT INTO complaints (user_id, category_id, description, location, image_path) 
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s) RETURNING id
             """
             cursor.execute(query, (user_id, category_id, description, location, image_path))
+            complaint_id = cursor.fetchone()[0]
             conn.commit()
-            complaint_id = cursor.lastrowid
             return complaint_id
         except Exception as e:
             print(f"Error creating complaint: {e}")
+            conn.rollback()
             return False
         finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
+            cursor.close()
+            conn.close()
 
     @staticmethod
     def get_all():
         conn = get_db_connection()
         if not conn: return []
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         query = """
             SELECT c.*, u.name as citizen_name, cat.name as category_name, o.name as officer_name 
             FROM complaints c
@@ -46,7 +47,7 @@ class Complaint:
     def get_by_user(user_id):
         conn = get_db_connection()
         if not conn: return []
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         query = """
             SELECT c.*, cat.name as category_name 
             FROM complaints c
@@ -64,7 +65,7 @@ class Complaint:
     def get_assigned_to_officer(officer_id):
         conn = get_db_connection()
         if not conn: return []
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         query = """
             SELECT c.*, u.name as citizen_name, cat.name as category_name 
             FROM complaints c
@@ -91,11 +92,11 @@ class Complaint:
             return True
         except Exception as e:
             print(f"Error updating status: {e}")
+            conn.rollback()
             return False
         finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
+            cursor.close()
+            conn.close()
 
     @staticmethod
     def assign_officer(id, officer_id):
@@ -109,8 +110,8 @@ class Complaint:
             return True
         except Exception as e:
             print(f"Error assigning officer: {e}")
+            conn.rollback()
             return False
         finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
+            cursor.close()
+            conn.close()

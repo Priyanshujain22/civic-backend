@@ -1,8 +1,8 @@
 from flask import Blueprint, request
-from ..utils.response import success_response, error_response
-from ..utils.auth_middleware import token_required, role_required
-from ..models.complaint_model import Complaint
-from ..models.user_model import User
+from utils.response import success_response, error_response
+from utils.auth_middleware import token_required, role_required
+from models.complaint_model import Complaint
+from models.user_model import User
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -18,17 +18,11 @@ def get_all_complaints():
 @role_required('admin')
 def assign_officer():
     data = request.json
-    complaint_id = data.get('complaint_id') # Front end sends 'id', backend expects 'complaint_id' or strict match. 
-    # Let's standardize: data['id'] from frontend might pass as complaint_id here.
+    complaint_id = data.get('complaint_id')
     if not complaint_id: 
         complaint_id = data.get('id')
         
-    officer_id = data.get('officer_id') # Needs to be ID, frontend might send name currently. 
-    # Frontend sends Officer Name in value potentially.
-    # Ideally frontend sends ID. We will assume ID is needed.
-    
-    # If officer_id is not int, try to find user by name? Too complex.
-    # MVP: Assume officer_id is passed correctly.
+    officer_id = data.get('officer_id')
 
     if not complaint_id or not officer_id:
         return error_response("Complaint ID and Officer ID required", 400)
@@ -42,7 +36,6 @@ def assign_officer():
 @token_required
 @role_required('admin')
 def get_users():
-    # Mostly need officers for assignment dropdown
     role_filter = request.args.get('role')
     users = User.get_all_by_role(role_filter)
     return success_response(data=users)

@@ -1,6 +1,11 @@
 from flask import Flask
 from flask_cors import CORS
 from config import Config
+import sys
+import os
+
+# Add backend directory to sys.path for absolute imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Blueprints
 from routes.auth_routes import auth_bp
