@@ -2,10 +2,14 @@ import psycopg2.extras
 from database import get_db_connection
 
 class Complaint:
+    last_error = None
+
     @staticmethod
     def create(user_id, category_id, description, location, image_path=None, resolution_type=None):
         conn = get_db_connection()
-        if not conn: return False
+        if not conn: 
+            Complaint.last_error = "Database connection failed"
+            return False
         try:
             cursor = conn.cursor()
             query = """
@@ -18,6 +22,7 @@ class Complaint:
             return complaint_id
         except Exception as e:
             print(f"Error creating complaint: {e}")
+            Complaint.last_error = str(e)
             conn.rollback()
             return False
         finally:

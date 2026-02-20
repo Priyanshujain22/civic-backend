@@ -29,12 +29,13 @@ def create_complaint():
     if not description or not location:
         return error_response("Description and Location are required", 400)
 
-    complaint_id = Complaint.create(user['id'], category_id, description, location, image_path, resolution_type)
+    result = Complaint.create(user['id'], category_id, description, location, image_path, resolution_type)
     
-    if complaint_id:
-        return success_response(message="Complaint submitted successfully", data={"id": complaint_id})
+    if isinstance(result, int) or result:
+        return success_response(message="Complaint submitted successfully", data={"id": result})
     else:
-        return error_response("Failed to submit complaint", 500)
+        # In a real production app, don't expose DB errors, but for this dev stage it helps
+        return error_response(f"Backend Error: Check if database has 'resolution_type' column. Detail: {Complaint.last_error if hasattr(Complaint, 'last_error') else 'Unknown'}", 500)
 
 @complaint_bp.route('/complaints/my', methods=['GET'])
 @token_required
