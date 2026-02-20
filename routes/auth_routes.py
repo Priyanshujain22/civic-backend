@@ -115,3 +115,17 @@ def update_profile():
         return success_response(message="Profile updated successfully")
     else:
         return error_response("Failed to update profile", 500)
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email')
+    
+    if not email:
+        return error_response("Email is required", 400)
+    
+    user = User.get_by_email(email)
+    
+    # For security reasons, we always return success even if the email doesn't exist
+    # to prevent account enumeration.
+    return success_response(message="If an account exists with this email, a reset link has been sent.")
