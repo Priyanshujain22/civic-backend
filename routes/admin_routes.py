@@ -94,3 +94,11 @@ def verify_vendor():
     if Vendor.verify(vendor_id):
         return success_response(message="Vendor verified successfully")
     return error_response("Verification failed", 500)
+
+@admin_bp.route('/migrate', methods=['GET'])
+@token_required
+@role_required('admin')
+def force_migrate():
+    from database import run_db_migrations
+    run_db_migrations()
+    return success_response(message="Migration triggered successfully.")

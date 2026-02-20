@@ -36,37 +36,21 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # Robust CORS configuration
-CORS(app, resources={r"/api/*": {
+CORS(app, resources={r"/*": {
     "origins": "*",
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    "allow_headers": ["Content-Type", "Authorization"]
+    "allow_headers": ["Content-Type", "Authorization", "Access-Control-Allow-Origin"]
 }})
 
-# Migration helper
-def run_db_migrations():
-    conn = None
-    try:
-        from database import get_db_connection
-        conn = get_db_connection()
-        if not conn: 
-            print("Migration failed: Could not connect to database.")
-            return
-        cursor = conn.cursor()
-        
-        # Ensure critical columns exist
-        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
-        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
-        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
-        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
-        
-        conn.commit()
-        cursor.close()
-        print("✅ Database migration successful.")
-    except Exception as e:
-        print(f"❌ Migration error: {e}")
-        if conn: conn.rollback()
-    finally:
-        if conn: conn.close()
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
+# Migration helper from database.py
+from database import run_db_migrations
 
 # Register Blueprints only if they were imported successfully
 if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):

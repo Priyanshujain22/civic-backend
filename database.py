@@ -29,3 +29,27 @@ def get_db_connection():
         clean_url_start = db_url.split('@')[-1] if '@' in db_url else db_url[:30]
         print(f"DEBUG: Attempted connection to host part: {clean_url_start}")
         return None
+
+def run_db_migrations():
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn: 
+            print("Migration failed: Could not connect to database.")
+            return
+        cursor = conn.cursor()
+        
+        # Ensure critical columns exist
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
+        
+        conn.commit()
+        cursor.close()
+        print("✅ Database migration successful.")
+    except Exception as e:
+        print(f"❌ Migration error: {e}")
+        if conn: conn.rollback()
+    finally:
+        if conn: conn.close()
