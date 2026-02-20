@@ -135,6 +135,31 @@ class Complaint:
             conn.close()
 
     @staticmethod
+    def assign_vendor(complaint_id, vendor_id):
+        conn = get_db_connection()
+        if not conn: return False
+        try:
+            cursor = conn.cursor()
+            query = """
+                UPDATE complaints SET 
+                resolution_type = 'private', 
+                selected_vendor_id = %s, 
+                status = 'In Progress',
+                updated_at = CURRENT_TIMESTAMP 
+                WHERE id = %s
+            """
+            cursor.execute(query, (vendor_id, complaint_id))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error assigning vendor: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
     def approve_quotation(complaint_id, vendor_id):
         conn = get_db_connection()
         if not conn: return False
