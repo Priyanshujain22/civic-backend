@@ -4,6 +4,7 @@ import jwt
 import datetime
 from config import Config
 from utils.response import success_response, error_response
+from utils.auth_middleware import token_required
 from models.user_model import User
 
 auth_bp = Blueprint('auth', __name__)
