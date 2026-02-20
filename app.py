@@ -44,20 +44,29 @@ CORS(app, resources={r"/api/*": {
 
 # Migration helper
 def run_db_migrations():
+    conn = None
     try:
         from database import get_db_connection
         conn = get_db_connection()
-        if not conn: return
+        if not conn: 
+            print("Migration failed: Could not connect to database.")
+            return
         cursor = conn.cursor()
+        
+        # Ensure critical columns exist
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
+        
         conn.commit()
         cursor.close()
-        conn.close()
-        print("Migration check completed (Added resolution_type, selected_vendor_id, and department if missing).")
+        print("✅ Database migration successful.")
     except Exception as e:
+        print(f"❌ Migration error: {e}")
+        if conn: conn.rollback()
+    finally:
+        if conn: conn.close()
         print(f"Migration error: {e}")
 
 # Register Blueprints only if they were imported successfully

@@ -20,6 +20,8 @@ def get_users():
     role = request.args.get('role')
     category = request.args.get('category')
     users = User.get_all_by_role(role, category)
+    if not users and User.last_error:
+        return error_response(f"Backend error: {User.last_error}", 500)
     return success_response(data=users)
 
 @admin_bp.route('/assign', methods=['POST'])
