@@ -67,7 +67,6 @@ def run_db_migrations():
         if conn: conn.rollback()
     finally:
         if conn: conn.close()
-        print(f"Migration error: {e}")
 
 # Register Blueprints only if they were imported successfully
 if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):
@@ -91,9 +90,6 @@ def home():
 @app.errorhandler(500)
 def handle_500(e):
     return {"status": "error", "message": "Internal Server Error", "details": str(e)}, 500
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
 
 @app.route('/api/db-check')
 def db_check():
