@@ -13,6 +13,14 @@ def get_all_complaints():
     complaints = Complaint.get_all()
     return success_response(data=complaints)
 
+@admin_bp.route('/users', methods=['GET'])
+@token_required
+@role_required('admin')
+def get_users():
+    role = request.args.get('role')
+    users = User.get_all_by_role(role)
+    return success_response(data=users)
+
 @admin_bp.route('/assign', methods=['POST'])
 @token_required
 @role_required('admin')
