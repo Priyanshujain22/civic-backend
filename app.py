@@ -16,6 +16,9 @@ except ImportError:
     sys.path.append(os.getcwd())
     from config import Config
 
+# Global to store import error
+IMPORT_ERROR = "None"
+
 # Import Blueprints - Wrapped in a try-except to catch import errors on Vercel
 try:
     from routes.auth_routes import auth_bp
@@ -23,8 +26,9 @@ try:
     from routes.admin_routes import admin_bp
     from routes.officer_routes import officer_bp
 except Exception as e:
-    print(f"CRITICAL IMPORT ERROR: {e}")
-    # We'll still create the app to show the error on the / route
+    import traceback
+    IMPORT_ERROR = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+    print(f"CRITICAL IMPORT ERROR: {IMPORT_ERROR}")
     auth_bp = complaint_bp = admin_bp = officer_bp = None
 
 app = Flask(__name__)
@@ -67,7 +71,7 @@ def home():
         "status": "online" if auth_bp else "degraded",
         "message": "Civic Complaint System API" if auth_bp else "CRITICAL: Import Error on Server",
         "db_configured": Config.DATABASE_URL is not None,
-        "error": str(sys.modules.get('app_error', 'None'))
+        "import_error": IMPORT_ERROR
     }
 
 @app.errorhandler(500)
