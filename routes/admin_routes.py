@@ -32,10 +32,40 @@ def assign_officer():
     else:
         return error_response("Assignment failed", 500)
 
-@admin_bp.route('/users', methods=['GET'])
+@admin_bp.route('/route/government', methods=['POST'])
 @token_required
 @role_required('admin')
-def get_users():
-    role_filter = request.args.get('role')
-    users = User.get_all_by_role(role_filter)
-    return success_response(data=users)
+def route_government():
+    data = request.json
+    complaint_id = data.get('complaint_id')
+    officer_id = data.get('officer_id')
+    if not complaint_id or not officer_id:
+        return error_response("Complaint ID and Officer ID required", 400)
+    if Complaint.route_to_government(complaint_id, officer_id):
+        return success_response(message="Complaint routed to government officer")
+    else:
+        return error_response("Routing failed", 500)
+
+@admin_bp.route('/route/private', methods=['POST'])
+@token_required
+@role_required('admin')
+def route_private():
+    data = request.json
+    complaint_id = data.get('complaint_id')
+    if not complaint_id:
+        return error_response("Complaint ID required", 400)
+    if Complaint.route_to_private(complaint_id):
+        return success_response(message="Complaint routed to private marketplace")
+    else:
+        return error_response("Routing failed", 500)
+
+@admin_bp.route('/vendors/verify', methods=['POST'])
+@token_required
+@role_required('admin')
+def verify_vendor():
+    data = request.json
+    vendor_id = data.get('vendor_id')
+    from models.vendor_model import Vendor
+    if Vendor.verify(vendor_id):
+        return success_response(message="Vendor verified successfully")
+    return error_response("Verification failed", 500)

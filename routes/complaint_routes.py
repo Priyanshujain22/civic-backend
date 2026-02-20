@@ -41,3 +41,22 @@ def get_my_complaints():
     user = request.user
     complaints = Complaint.get_by_user(user['id'])
     return success_response(data=complaints)
+
+@complaint_bp.route('/complaints/<int:complaint_id>/quotes', methods=['GET'])
+@token_required
+def get_complaint_quotes(complaint_id):
+    from models.quotation_model import Quotation
+    quotes = Quotation.get_by_complaint(complaint_id)
+    return success_response(data=quotes)
+
+@complaint_bp.route('/quotes/<int:complaint_id>/approve', methods=['POST'])
+@token_required
+def approve_quote(complaint_id):
+    data = request.json
+    vendor_id = data.get('vendor_id')
+    if not vendor_id:
+        return error_response("Vendor ID required", 400)
+    if Complaint.approve_quotation(complaint_id, vendor_id):
+        return success_response(message="Quotation approved and vendor hired")
+    else:
+        return error_response("Approval failed", 500)

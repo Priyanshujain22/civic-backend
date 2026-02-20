@@ -32,3 +32,17 @@ def update_status():
         return success_response(message="Status updated successfully")
     else:
         return error_response("Update failed", 500)
+
+@officer_bp.route('/upload-proof', methods=['POST'])
+@token_required
+@role_required('officer')
+def upload_proof():
+    data = request.json
+    complaint_id = data.get('complaint_id')
+    proof_notes = data.get('proof_notes')
+    # For now, we simulate image upload by just accepting a path/note
+    if not complaint_id:
+        return error_response("Complaint ID required", 400)
+    if Complaint.update_status(complaint_id, 'Resolved', proof_notes):
+        return success_response(message="Completion proof uploaded and job resolved")
+    return error_response("Failed to upload proof", 500)

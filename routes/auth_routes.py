@@ -6,6 +6,7 @@ from config import Config
 from utils.response import success_response, error_response
 from utils.auth_middleware import token_required
 from models.user_model import User
+from models.vendor_model import Vendor
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -27,7 +28,13 @@ def register():
 
     hashed_password = generate_password_hash(password)
     
-    if User.create(name, email, hashed_password, role, phone):
+    user_id = User.create(name, email, hashed_password, role, phone)
+    if user_id:
+        if role == 'vendor':
+            business_name = data.get('business_name', name)
+            service_type = data.get('service_type')
+            Vendor.create(user_id, business_name, service_type)
+            
         return success_response(message="User registered successfully")
     else:
         return error_response("Registration failed", 500)

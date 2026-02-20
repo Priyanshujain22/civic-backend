@@ -25,11 +25,12 @@ try:
     from routes.complaint_routes import complaint_bp
     from routes.admin_routes import admin_bp
     from routes.officer_routes import officer_bp
+    from routes.vendor_routes import vendor_bp
 except Exception as e:
     import traceback
     IMPORT_ERROR = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
     print(f"CRITICAL IMPORT ERROR: {IMPORT_ERROR}")
-    auth_bp = complaint_bp = admin_bp = officer_bp = None
+    auth_bp = complaint_bp = admin_bp = officer_bp = vendor_bp = None
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -57,11 +58,12 @@ def run_db_migrations():
         print(f"Migration error: {e}")
 
 # Register Blueprints only if they were imported successfully
-if all([auth_bp, complaint_bp, admin_bp, officer_bp]):
+if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(complaint_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(officer_bp, url_prefix='/api/officer')
+    app.register_blueprint(vendor_bp, url_prefix='/api/vendor')
     # Run migrations once on startup
     run_db_migrations()
 
