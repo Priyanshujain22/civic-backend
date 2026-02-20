@@ -86,3 +86,31 @@ def login():
             "role": user['role']
         }
     })
+
+@auth_bp.route('/profile', methods=['GET'])
+@token_required
+def get_profile():
+    user_id = request.user['id']
+    user = User.get_by_id(user_id)
+    if not user:
+        return error_response("User not found", 404)
+    
+    # Remove password from response
+    user.pop('password', None)
+    return success_response(data=user)
+
+@auth_bp.route('/profile/update', methods=['POST'])
+@token_required
+def update_profile():
+    user_id = request.user['id']
+    data = request.json
+    name = data.get('name')
+    phone = data.get('phone')
+
+    if not name:
+        return error_response("Name is required", 400)
+
+    if User.update(user_id, name, phone):
+        return success_response(message="Profile updated successfully")
+    else:
+        return error_response("Failed to update profile", 500)

@@ -52,17 +52,19 @@ class User:
             conn.close()
 
     @staticmethod
-    def get_all_by_role(role=None):
+    def update(user_id, name, phone):
         conn = get_db_connection()
-        if not conn: return []
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        if role:
-            query = "SELECT id, name, email, role, phone FROM users WHERE role = %s"
-            cursor.execute(query, (role,))
-        else:
-            query = "SELECT id, name, email, role, phone FROM users"
-            cursor.execute(query)
-        users = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return users
+        if not conn: return False
+        try:
+            cursor = conn.cursor()
+            query = "UPDATE users SET name = %s, phone = %s WHERE id = %s"
+            cursor.execute(query, (name, phone, user_id))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
