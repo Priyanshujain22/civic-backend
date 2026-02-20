@@ -32,42 +32,58 @@ class Complaint:
     @staticmethod
     def get_all():
         conn = get_db_connection()
-        if not conn: return []
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        query = """
-            SELECT c.*, u.name as citizen_name, cat.name as category_name, 
-                   o.name as officer_name, v.name as vendor_name 
-            FROM complaints c
-            JOIN users u ON c.user_id = u.id
-            JOIN categories cat ON c.category_id = cat.id
-            LEFT JOIN users o ON c.assigned_officer_id = o.id
-            LEFT JOIN users v ON c.selected_vendor_id = v.id
-            ORDER BY c.created_at DESC
-        """
-        cursor.execute(query)
-        data = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return data
+        if not conn: 
+            Complaint.last_error = "Database connection failed"
+            return []
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            query = """
+                SELECT c.*, u.name as citizen_name, cat.name as category_name, 
+                       o.name as officer_name, v.name as vendor_name 
+                FROM complaints c
+                JOIN users u ON c.user_id = u.id
+                JOIN categories cat ON c.category_id = cat.id
+                LEFT JOIN users o ON c.assigned_officer_id = o.id
+                LEFT JOIN users v ON c.selected_vendor_id = v.id
+                ORDER BY c.created_at DESC
+            """
+            cursor.execute(query)
+            data = cursor.fetchall()
+            return data
+        except Exception as e:
+            print(f"Error fetching all complaints: {e}")
+            Complaint.last_error = str(e)
+            return []
+        finally:
+            if 'cursor' in locals(): cursor.close()
+            if 'conn' in locals(): conn.close()
 
     @staticmethod
     def get_by_user(user_id):
         conn = get_db_connection()
-        if not conn: return []
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        query = """
-            SELECT c.*, cat.name as category_name, v.name as vendor_name
-            FROM complaints c
-            JOIN categories cat ON c.category_id = cat.id
-            LEFT JOIN users v ON c.selected_vendor_id = v.id
-            WHERE c.user_id = %s
-            ORDER BY c.created_at DESC
-        """
-        cursor.execute(query, (user_id,))
-        data = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return data
+        if not conn: 
+            Complaint.last_error = "Database connection failed"
+            return []
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            query = """
+                SELECT c.*, cat.name as category_name, v.name as vendor_name
+                FROM complaints c
+                JOIN categories cat ON c.category_id = cat.id
+                LEFT JOIN users v ON c.selected_vendor_id = v.id
+                WHERE c.user_id = %s
+                ORDER BY c.created_at DESC
+            """
+            cursor.execute(query, (user_id,))
+            data = cursor.fetchall()
+            return data
+        except Exception as e:
+            print(f"Error fetching user complaints: {e}")
+            Complaint.last_error = str(e)
+            return []
+        finally:
+            if 'cursor' in locals(): cursor.close()
+            if 'conn' in locals(): conn.close()
 
     @staticmethod
     def route_to_government(complaint_id, officer_id):

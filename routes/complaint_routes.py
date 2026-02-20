@@ -42,6 +42,8 @@ def create_complaint():
 def get_my_complaints():
     user = request.user
     complaints = Complaint.get_by_user(user['id'])
+    if not complaints and Complaint.last_error:
+        return error_response(f"Retrieval Error: {Complaint.last_error}", 500)
     return success_response(data=complaints)
 
 @complaint_bp.route('/complaints/<int:complaint_id>/quotes', methods=['GET'])
