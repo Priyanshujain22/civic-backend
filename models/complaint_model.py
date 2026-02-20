@@ -86,6 +86,33 @@ class Complaint:
             if 'conn' in locals(): conn.close()
 
     @staticmethod
+    def get_by_vendor(vendor_id):
+        conn = get_db_connection()
+        if not conn: 
+            Complaint.last_error = "Database connection failed"
+            return []
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            query = """
+                SELECT c.*, cat.name as category_name, 
+                       (SELECT price FROM quotations WHERE complaint_id = c.id AND vendor_id = %s LIMIT 1) as price
+                FROM complaints c
+                JOIN categories cat ON c.category_id = cat.id
+                WHERE c.selected_vendor_id = %s
+                ORDER BY c.updated_at DESC
+            """
+            cursor.execute(query, (vendor_id, vendor_id))
+            data = cursor.fetchall()
+            return data
+        except Exception as e:
+            print(f"Error fetching vendor jobs: {e}")
+            Complaint.last_error = str(e)
+            return []
+        finally:
+            if 'cursor' in locals(): cursor.close()
+            if 'conn' in locals(): conn.close()
+
+    @staticmethod
     def route_to_government(complaint_id, officer_id):
         conn = get_db_connection()
         if not conn: return False

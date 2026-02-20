@@ -42,10 +42,8 @@ def submit_quote():
 @token_required
 @role_required('vendor')
 def get_my_jobs():
-    jobs = Quotation.get_by_vendor(request.user['id'])
-    # Filter for jobs where quote was approved
-    accepted_jobs = [j for j in jobs if j['status'] == 'Approved']
-    return success_response(data=accepted_jobs)
+    jobs = Complaint.get_by_vendor(request.user['id'])
+    return success_response(data=jobs)
 
 @vendor_bp.route('/complete', methods=['POST'])
 @token_required

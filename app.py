@@ -50,12 +50,13 @@ def run_db_migrations():
         if not conn: return
         cursor = conn.cursor()
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
-        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20) CHECK (resolution_type IN ('government', 'private'));")
-        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT REFERENCES users(id) ON DELETE SET NULL;")
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
         conn.commit()
         cursor.close()
         conn.close()
-        print("Migration check completed (Added resolution_type and selected_vendor_id if missing).")
+        print("Migration check completed (Added resolution_type, selected_vendor_id, and department if missing).")
     except Exception as e:
         print(f"Migration error: {e}")
 

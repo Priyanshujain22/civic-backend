@@ -18,7 +18,8 @@ def get_all_complaints():
 @role_required('admin')
 def get_users():
     role = request.args.get('role')
-    users = User.get_all_by_role(role)
+    category = request.args.get('category')
+    users = User.get_all_by_role(role, category)
     return success_response(data=users)
 
 @admin_bp.route('/assign', methods=['POST'])

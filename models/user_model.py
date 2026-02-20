@@ -71,16 +71,38 @@ class User:
             conn.close()
 
     @staticmethod
-    def get_all_by_role(role=None):
+    def get_all_by_role(role=None, category=None):
         conn = get_db_connection()
         if not conn: return []
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        if role:
+        
+        if role == 'vendor':
+            # For vendors, JOIN with vendor table to get service_type
+            query = """
+                SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at, v.service_type
+                FROM users u
+                JOIN vendors v ON u.id = v.user_id
+                WHERE u.role = 'vendor'
+            """
+            params = []
+            if category:
+                query += " AND v.service_type = %s"
+                params.append(category)
+            cursor.execute(query, params)
+        elif role == 'officer':
+            query = "SELECT id, name, email, phone, role, department, created_at FROM users WHERE role = 'officer'"
+            params = []
+            if category:
+                query += " AND department = %s"
+                params.append(category)
+            cursor.execute(query, params)
+        elif role:
             query = "SELECT id, name, email, phone, role, created_at FROM users WHERE role = %s"
             cursor.execute(query, (role,))
         else:
             query = "SELECT id, name, email, phone, role, created_at FROM users"
             cursor.execute(query)
+            
         users = cursor.fetchall()
         cursor.close()
         conn.close()
