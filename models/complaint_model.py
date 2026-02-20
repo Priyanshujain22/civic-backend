@@ -3,16 +3,16 @@ from database import get_db_connection
 
 class Complaint:
     @staticmethod
-    def create(user_id, category_id, description, location, image_path=None):
+    def create(user_id, category_id, description, location, image_path=None, resolution_type=None):
         conn = get_db_connection()
         if not conn: return False
         try:
             cursor = conn.cursor()
             query = """
-                INSERT INTO complaints (user_id, category_id, description, location, image_path) 
-                VALUES (%s, %s, %s, %s, %s) RETURNING id
+                INSERT INTO complaints (user_id, category_id, description, location, image_path, resolution_type) 
+                VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
             """
-            cursor.execute(query, (user_id, category_id, description, location, image_path))
+            cursor.execute(query, (user_id, category_id, description, location, image_path, resolution_type))
             complaint_id = cursor.fetchone()[0]
             conn.commit()
             return complaint_id

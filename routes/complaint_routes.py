@@ -24,11 +24,12 @@ def create_complaint():
     description = data.get('description')
     location = data.get('location')
     image_path = data.get('image_path')
+    resolution_type = data.get('resolution_type')
 
     if not description or not location:
         return error_response("Description and Location are required", 400)
 
-    complaint_id = Complaint.create(user['id'], category_id, description, location, image_path)
+    complaint_id = Complaint.create(user['id'], category_id, description, location, image_path, resolution_type)
     
     if complaint_id:
         return success_response(message="Complaint submitted successfully", data={"id": complaint_id})
