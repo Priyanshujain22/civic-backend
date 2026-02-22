@@ -40,9 +40,11 @@ def upload_proof():
     data = request.json
     complaint_id = data.get('complaint_id')
     proof_notes = data.get('proof_notes')
-    # For now, we simulate image upload by just accepting a path/note
+    image_data = data.get('image_data')  # Base64 string
+    
     if not complaint_id:
         return error_response("Complaint ID required", 400)
-    if Complaint.update_status(complaint_id, 'Resolved', proof_notes):
+        
+    if Complaint.update_status(complaint_id, 'Resolved', proof_notes, image_data):
         return success_response(message="Completion proof uploaded and job resolved")
     return error_response("Failed to upload proof", 500)

@@ -362,7 +362,7 @@ class Complaint:
 
 
     @staticmethod
-    def update_status(id, status, resolution_notes=None):
+    def update_status(id, status, resolution_notes=None, resolution_image=None):
         conn = get_db_connection()
         if not conn: 
             print("DB Connection failed in update_status")
@@ -371,8 +371,12 @@ class Complaint:
             cursor = conn.cursor()
             print(f"DEBUG: Updating complaint {id} to status {status}")
             if status == 'Resolved' and resolution_notes:
-                query = "UPDATE complaints SET status = %s, resolution_notes = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
-                cursor.execute(query, (status, resolution_notes, id))
+                if resolution_image:
+                    query = "UPDATE complaints SET status = %s, resolution_notes = %s, resolution_image = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+                    cursor.execute(query, (status, resolution_notes, resolution_image, id))
+                else:
+                    query = "UPDATE complaints SET status = %s, resolution_notes = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+                    cursor.execute(query, (status, resolution_notes, id))
             else:
                 query = "UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
                 cursor.execute(query, (status, id))
