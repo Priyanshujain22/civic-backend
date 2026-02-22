@@ -266,13 +266,33 @@ class Complaint:
         if not conn: return False
         try:
             cursor = conn.cursor()
+            # 1. Insert feedback
             query = """
                 INSERT INTO feedback (complaint_id, rating, comment) 
                 VALUES (%s, %s, %s)
             """
             cursor.execute(query, (complaint_id, rating, comment))
-            # Also update the vendor's overall rating in their profile for speed
-            # But let's calculate on the fly or update vendor table later.
+            
+            # 2. Get the vendor ID for this complaint
+            cursor.execute("SELECT selected_vendor_id FROM complaints WHERE id = %s", (complaint_id,))
+            vendor_res = cursor.fetchone()
+            if vendor_res and vendor_res[0]:
+                vendor_user_id = vendor_res[0]
+                
+                # 3. Recalculate average rating for this vendor
+                cursor.execute("""
+                    SELECT AVG(rating) as avg_rating 
+                    FROM feedback f
+                    JOIN complaints c ON f.complaint_id = c.id
+                    WHERE c.selected_vendor_id = %s
+                """, (vendor_user_id,))
+                avg_res = cursor.fetchone()
+                if avg_res and avg_res[0] is not None:
+                    new_avg = avg_res[0]
+                    
+                    # 4. Update vendors table
+                    cursor.execute("UPDATE vendors SET rating = %s WHERE user_id = %s", (new_avg, vendor_user_id))
+            
             conn.commit()
             return True
         except Exception as e:
