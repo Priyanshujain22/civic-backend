@@ -72,40 +72,51 @@ def run_db_migrations():
         for cat in categories:
             cursor.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (cat,))
         
+        # Ensure vendors table exists (to prevent relation does not exist error)
+        print("Ensuring vendors table exists...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vendors (
+                id SERIAL PRIMARY KEY,
+                user_id INT UNIQUE NOT NULL,
+                business_name VARCHAR(100) NOT NULL,
+                service_type VARCHAR(100),
+                verified BOOLEAN DEFAULT FALSE,
+                rating DECIMAL(3,2) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        """)
+
         # Seed Test Users
         print("Seeding test users (Officers & Vendors)...")
-        from werkzeug.security import generate_password_hash
-        hashed_pw = generate_password_hash('password123')
-
+        # Direct passwords as requested by user
+        
         test_users = [
             # Admin & Officers
-            ('System Admin', 'admin@system.com', 'admin', 'General'),
-            ('General Off', 'general@test.com', 'officer', 'General'),
-            ('Road Off', 'road@test.com', 'officer', 'Road Damage'),
+            ('System Admin', 'admin@system.com', 'admin@123', 'admin', 'General'),
+            ('General Off', 'general@test.com', 'password123', 'officer', 'General'),
+            ('Road Off', 'road@test.com', 'password123', 'officer', 'Road Damage'),
             # Vendors
-            ('Waste Expert', 'waste@test.com', 'vendor', 'Waste Management'),
-            ('Fixer Ltd', 'fixer@test.com', 'vendor', 'Road Damage'),
-            ('Test Vendor', 'vendor@test.com', 'vendor', 'General')
+            ('Waste Expert', 'waste@test.com', 'password123', 'vendor', 'Waste Management'),
+            ('Fixer Ltd', 'fixer@test.com', 'password123', 'vendor', 'Road Damage'),
+            ('Test Vendor', 'vendor@test.com', 'password123', 'vendor', 'General')
         ]
 
-        for name, email, role, dept in test_users:
+        for name, email, password, role, dept in test_users:
             # Get or create user
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             user_row = cursor.fetchone()
             
-            # Special case for admin password fallback
-            current_pw = hashed_pw if email != 'admin@system.com' else 'admin@123'
-
             if not user_row:
                 cursor.execute(
                     "INSERT INTO users (name, email, password, role, department) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-                    (name, email, current_pw, role, dept)
+                    (name, email, password, role, dept)
                 )
                 uid = cursor.fetchone()[0]
             else:
                 uid = user_row[0]
                 # Force password and department update for test accounts to ensure login works
-                cursor.execute("UPDATE users SET password = %s, department = %s WHERE id = %s", (current_pw, dept, uid))
+                cursor.execute("UPDATE users SET password = %s, department = %s WHERE id = %s", (password, dept, uid))
 
             # Always ensure vendor profile exists if role is vendor
             if role == 'vendor':
