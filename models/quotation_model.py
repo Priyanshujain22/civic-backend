@@ -47,9 +47,10 @@ class Quotation:
         if not conn: return []
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         query = """
-            SELECT q.*, c.description, c.location, c.status as complaint_status
+            SELECT q.*, c.description, c.location, c.status as complaint_status, f.rating as feedback_rating
             FROM quotations q
             JOIN complaints c ON q.complaint_id = c.id
+            LEFT JOIN feedback f ON q.complaint_id = f.complaint_id
             WHERE q.vendor_id = %s
         """
         cursor.execute(query, (vendor_id,))
