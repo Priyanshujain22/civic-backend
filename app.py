@@ -52,6 +52,10 @@ def after_request(response):
 # Migration helper from database.py
 from database import run_db_migrations
 
+# Run migrations once on startup
+print("Starting database migrations...")
+run_db_migrations()
+
 # Register Blueprints only if they were imported successfully
 if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -59,8 +63,8 @@ if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(officer_bp, url_prefix='/api/officer')
     app.register_blueprint(vendor_bp, url_prefix='/api/vendor')
-    # Run migrations once on startup
-    run_db_migrations()
+else:
+    print(f"⚠️ Warning: Some blueprints failed to load. Migration still attempted. Error: {IMPORT_ERROR}")
 
 @app.route('/')
 def home():

@@ -40,12 +40,14 @@ def run_db_migrations():
         cursor = conn.cursor()
         
         # Ensure critical columns exist
+        print("Ensuring critical columns...")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
 
         # Fix users_role_check constraint to include 'vendor'
+        print("Updating users_role_check constraint...")
         cursor.execute("""
             ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
             ALTER TABLE users ADD CONSTRAINT users_role_check 
@@ -53,13 +55,19 @@ def run_db_migrations():
         """)
 
         # Fix complaints_status_check constraint to include 'Routed' and 'Awaiting Quotes'
+        print("Updating complaints_status_check constraint...")
+        # We try multiple common names just in case
+        names = ['complaints_status_check', 'status_check']
+        for name in names:
+            cursor.execute(f"ALTER TABLE complaints DROP CONSTRAINT IF EXISTS {name};")
+        
         cursor.execute("""
-            ALTER TABLE complaints DROP CONSTRAINT IF EXISTS complaints_status_check;
             ALTER TABLE complaints ADD CONSTRAINT complaints_status_check 
             CHECK (status IN ('Pending', 'Routed', 'Awaiting Quotes', 'In Progress', 'Resolved'));
         """)
 
         # Ensure categories exist
+        print("Syncing categories...")
         categories = ['Road Damage', 'Garbage', 'Street Light', 'Water Leakage', 'Drainage', 'Other']
         for cat in categories:
             cursor.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (cat,))
