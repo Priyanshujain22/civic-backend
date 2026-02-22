@@ -89,14 +89,14 @@ class User:
                 """
                 params = []
                 if category:
-                    query += " AND v.service_type = %s"
+                    query += " AND (v.service_type = %s OR v.service_type = 'General' OR v.service_type IS NULL)"
                     params.append(category)
                 cursor.execute(query, params)
             elif role == 'officer':
                 query = "SELECT id, name, email, phone, role, department, created_at FROM users WHERE role = 'officer'"
                 params = []
                 if category:
-                    query += " AND department = %s"
+                    query += " AND (department = %s OR department = 'General' OR department IS NULL)"
                     params.append(category)
                 cursor.execute(query, params)
             elif role:
