@@ -346,10 +346,12 @@ class Complaint:
         if not conn: return []
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         query = """
-            SELECT c.*, u.name as citizen_name, cat.name as category_name 
+            SELECT c.*, u.name as citizen_name, cat.name as category_name,
+                   f.rating as feedback_rating, f.comment as feedback_comment
             FROM complaints c
             JOIN users u ON c.user_id = u.id
             JOIN categories cat ON c.category_id = cat.id
+            LEFT JOIN feedback f ON c.id = f.complaint_id
             WHERE c.assigned_officer_id = %s
             ORDER BY c.created_at DESC
         """
