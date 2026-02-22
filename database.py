@@ -52,6 +52,13 @@ def run_db_migrations():
             CHECK (role IN ('citizen', 'admin', 'officer', 'vendor'));
         """)
 
+        # Fix complaints_status_check constraint to include 'Routed' and 'Awaiting Quotes'
+        cursor.execute("""
+            ALTER TABLE complaints DROP CONSTRAINT IF EXISTS complaints_status_check;
+            ALTER TABLE complaints ADD CONSTRAINT complaints_status_check 
+            CHECK (status IN ('Pending', 'Routed', 'Awaiting Quotes', 'In Progress', 'Resolved'));
+        """)
+
         # Ensure categories exist
         categories = ['Road Damage', 'Garbage', 'Street Light', 'Water Leakage', 'Drainage', 'Other']
         for cat in categories:
