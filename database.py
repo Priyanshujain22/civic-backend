@@ -20,12 +20,21 @@ def get_db_connection():
         db_url += f"{separator}sslmode=require"
         
     try:
-        # Set a short timeout for the connection attempt
-        connection = psycopg2.connect(db_url, connect_timeout=10)
-        return connection
+        # Try direct connection first
+        return psycopg2.connect(db_url, connect_timeout=10)
     except Exception as err:
+        # If DSN parsing failed, try to connect by splitting the URL
+        # This fixes the "invalid dsn: missing equal sign in parameter: sslmode" error
+        if "sslmode" in str(err) or "dsn" in str(err).lower():
+            try:
+                print("DEBUG: DSN parsing failed, attempting fallback connection...")
+                if "?" in db_url:
+                    base_url = db_url.split('?')[0]
+                    return psycopg2.connect(base_url, sslmode='require', connect_timeout=10)
+            except Exception as fallback_err:
+                print(f"Fallback connection also failed: {fallback_err}")
+        
         print(f"CRITICAL Database connection error: {type(err).__name__}: {err}")
-        # Only log the start of the URL for privacy, but enough to see the host
         clean_url_start = db_url.split('@')[-1] if '@' in db_url else db_url[:30]
         print(f"DEBUG: Attempted connection to host part: {clean_url_start}")
         return None
