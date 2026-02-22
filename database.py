@@ -44,6 +44,7 @@ def run_db_migrations():
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_notes TEXT;")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
+        cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'unpaid';")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
 
         # Fix users_role_check constraint to include 'vendor'
@@ -63,7 +64,7 @@ def run_db_migrations():
         
         cursor.execute("""
             ALTER TABLE complaints ADD CONSTRAINT complaints_status_check 
-            CHECK (status IN ('Pending', 'Routed', 'Awaiting Quotes', 'In Progress', 'Resolved'));
+            CHECK (status IN ('Pending', 'Routed', 'Awaiting Quotes', 'Awaiting Payment', 'In Progress', 'Resolved'));
         """)
 
         # Ensure categories exist

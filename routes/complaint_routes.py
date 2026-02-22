@@ -61,9 +61,32 @@ def approve_quote(complaint_id):
     if not vendor_id:
         return error_response("Vendor ID required", 400)
     if Complaint.approve_quotation(complaint_id, vendor_id):
-        return success_response(message="Quotation approved and vendor hired")
+        return success_response(message="Quotation approved. Awaiting payment.")
     else:
         return error_response("Approval failed", 500)
+
+@complaint_bp.route('/complaints/<int:complaint_id>/pay', methods=['POST'])
+@token_required
+def pay_complaint(complaint_id):
+    if Complaint.mark_as_paid(complaint_id):
+        return success_response(message="Payment successful. Job is now in progress.")
+    else:
+        return error_response("Payment failed", 500)
+
+@complaint_bp.route('/complaints/<int:complaint_id>/feedback', methods=['POST'])
+@token_required
+def post_feedback(complaint_id):
+    data = request.json
+    rating = data.get('rating')
+    comment = data.get('comment', '')
+    
+    if not rating:
+        return error_response("Rating is required", 400)
+        
+    if Complaint.submit_feedback(complaint_id, rating, comment):
+        return success_response(message="Feedback submitted successfully")
+    else:
+        return error_response("Failed to submit feedback", 500)
 
 @complaint_bp.route('/complaints/<int:complaint_id>/updates', methods=['GET'])
 @token_required

@@ -207,10 +207,11 @@ class Complaint:
         try:
             cursor = conn.cursor()
             # 1. Update Complaint status and selected_vendor
+            # Change: Status becomes 'Awaiting Payment' instead of 'In Progress'
             query_comp = """
                 UPDATE complaints SET 
                 selected_vendor_id = %s, 
-                status = 'In Progress',
+                status = 'Awaiting Payment',
                 updated_at = CURRENT_TIMESTAMP 
                 WHERE id = %s
             """
@@ -224,6 +225,52 @@ class Complaint:
             return True
         except Exception as e:
             print(f"Error approving quotation: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
+    def mark_as_paid(complaint_id):
+        conn = get_db_connection()
+        if not conn: return False
+        try:
+            cursor = conn.cursor()
+            # Set status to 'In Progress' and payment_status to 'paid'
+            query = """
+                UPDATE complaints SET 
+                status = 'In Progress', 
+                payment_status = 'paid',
+                updated_at = CURRENT_TIMESTAMP 
+                WHERE id = %s
+            """
+            cursor.execute(query, (complaint_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error marking as paid: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
+    def submit_feedback(complaint_id, rating, comment):
+        conn = get_db_connection()
+        if not conn: return False
+        try:
+            cursor = conn.cursor()
+            query = """
+                INSERT INTO feedback (complaint_id, rating, comment) 
+                VALUES (%s, %s, %s)
+            """
+            cursor.execute(query, (complaint_id, rating, comment))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error submitting feedback: {e}")
             conn.rollback()
             return False
         finally:
