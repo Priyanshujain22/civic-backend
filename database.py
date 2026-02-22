@@ -44,6 +44,18 @@ def run_db_migrations():
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(20);")
         cursor.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS selected_vendor_id INT;")
         cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);")
+
+        # Fix users_role_check constraint to include 'vendor'
+        cursor.execute("""
+            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+            ALTER TABLE users ADD CONSTRAINT users_role_check 
+            CHECK (role IN ('citizen', 'admin', 'officer', 'vendor'));
+        """)
+
+        # Ensure categories exist
+        categories = ['Road Damage', 'Garbage', 'Street Light', 'Water Leakage', 'Drainage', 'Other']
+        for cat in categories:
+            cursor.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (cat,))
         
         conn.commit()
         cursor.close()
