@@ -40,10 +40,11 @@ class Complaint:
             query = """
                 SELECT c.*, cat.name as category_name, u.name as citizen_name, 
                        v.business_name as vendor_name, v.rating as vendor_rating,
-                       f.rating as user_rating
+                       f.rating as user_rating, o.name as officer_name
                 FROM complaints c
                 JOIN categories cat ON c.category_id = cat.id
                 JOIN users u ON c.user_id = u.id
+                LEFT JOIN users o ON c.assigned_officer_id = o.id
                 LEFT JOIN vendors v ON c.selected_vendor_id = v.user_id
                 LEFT JOIN feedback f ON c.id = f.complaint_id
                 ORDER BY c.created_at DESC
