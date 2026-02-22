@@ -113,20 +113,30 @@ class Complaint:
             if 'conn' in locals(): conn.close()
 
     @staticmethod
-    def route_to_government(complaint_id, officer_id):
+    def route_to_government(complaint_id, officer_id=None):
         conn = get_db_connection()
         if not conn: return False
         try:
             cursor = conn.cursor()
-            query = """
-                UPDATE complaints SET 
-                resolution_type = 'government', 
-                assigned_officer_id = %s, 
-                status = 'In Progress',
-                updated_at = CURRENT_TIMESTAMP 
-                WHERE id = %s
-            """
-            cursor.execute(query, (officer_id, complaint_id))
+            if officer_id:
+                query = """
+                    UPDATE complaints SET 
+                    resolution_type = 'government', 
+                    assigned_officer_id = %s, 
+                    status = 'In Progress',
+                    updated_at = CURRENT_TIMESTAMP 
+                    WHERE id = %s
+                """
+                cursor.execute(query, (officer_id, complaint_id))
+            else:
+                query = """
+                    UPDATE complaints SET 
+                    resolution_type = 'government', 
+                    status = 'Routed',
+                    updated_at = CURRENT_TIMESTAMP 
+                    WHERE id = %s
+                """
+                cursor.execute(query, (complaint_id,))
             conn.commit()
             return True
         except Exception as e:

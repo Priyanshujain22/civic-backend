@@ -49,11 +49,11 @@ def assign_officer():
 def route_government():
     data = request.json
     complaint_id = data.get('complaint_id')
-    officer_id = data.get('officer_id')
-    if not complaint_id or not officer_id:
-        return error_response("Complaint ID and Officer ID required", 400)
+    officer_id = data.get('officer_id')  # Optional now
+    if not complaint_id:
+        return error_response("Complaint ID required", 400)
     if Complaint.route_to_government(complaint_id, officer_id):
-        return success_response(message="Complaint routed to government officer")
+        return success_response(message="Complaint routed to government")
     else:
         return error_response("Routing failed", 500)
 
