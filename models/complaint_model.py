@@ -38,13 +38,14 @@ class Complaint:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             query = """
-                SELECT c.*, u.name as citizen_name, cat.name as category_name, 
-                       o.name as officer_name, v.name as vendor_name 
+                SELECT c.*, cat.name as category_name, u.name as citizen_name, 
+                       v.business_name as vendor_name, v.rating as vendor_rating,
+                       f.rating as user_rating
                 FROM complaints c
-                JOIN users u ON c.user_id = u.id
                 JOIN categories cat ON c.category_id = cat.id
-                LEFT JOIN users o ON c.assigned_officer_id = o.id
-                LEFT JOIN users v ON c.selected_vendor_id = v.id
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN vendors v ON c.selected_vendor_id = v.user_id
+                LEFT JOIN feedback f ON c.id = f.complaint_id
                 ORDER BY c.created_at DESC
             """
             cursor.execute(query)
@@ -68,10 +69,12 @@ class Complaint:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             query = """
                 SELECT c.*, cat.name as category_name, v.business_name as vendor_name,
-                       (SELECT price FROM quotations WHERE complaint_id = c.id AND status = 'Approved' LIMIT 1) as agreed_price
+                       (SELECT price FROM quotations WHERE complaint_id = c.id AND status = 'Approved' LIMIT 1) as agreed_price,
+                       f.rating as user_rating
                 FROM complaints c
                 JOIN categories cat ON c.category_id = cat.id
                 LEFT JOIN vendors v ON c.selected_vendor_id = v.user_id
+                LEFT JOIN feedback f ON c.id = f.complaint_id
                 WHERE c.user_id = %s
                 ORDER BY c.created_at DESC
             """
@@ -87,7 +90,7 @@ class Complaint:
             if 'conn' in locals(): conn.close()
 
     @staticmethod
-    def get_by_vendor(vendor_id):
+    def get_by_vendor(vendor_user_id):
         conn = get_db_connection()
         if not conn: 
             Complaint.last_error = "Database connection failed"
@@ -95,14 +98,15 @@ class Complaint:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             query = """
-                SELECT c.*, cat.name as category_name, 
+                SELECT c.*, u.name as citizen_name, cat.name as category_name,
                        (SELECT price FROM quotations WHERE complaint_id = c.id AND vendor_id = %s LIMIT 1) as price
                 FROM complaints c
+                JOIN users u ON c.user_id = u.id
                 JOIN categories cat ON c.category_id = cat.id
                 WHERE c.selected_vendor_id = %s
                 ORDER BY c.updated_at DESC
             """
-            cursor.execute(query, (vendor_id, vendor_id))
+            cursor.execute(query, (vendor_user_id, vendor_user_id))
             data = cursor.fetchall()
             return data
         except Exception as e:
@@ -267,12 +271,50 @@ class Complaint:
                 VALUES (%s, %s, %s)
             """
             cursor.execute(query, (complaint_id, rating, comment))
+            # Also update the vendor's overall rating in their profile for speed
+            # But let's calculate on the fly or update vendor table later.
             conn.commit()
             return True
         except Exception as e:
             print(f"Error submitting feedback: {e}")
             conn.rollback()
             return False
+        finally:
+            cursor.close()
+            conn.close()
+
+    @staticmethod
+    def get_vendor_stats(vendor_user_id):
+        conn = get_db_connection()
+        if not conn: return {"active_bids": 0, "completed_jobs": 0, "total_earnings": 0}
+        try:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            # Active Bids (Quotations that are still pending)
+            cursor.execute("SELECT COUNT(*) as count FROM quotations WHERE vendor_id = %s AND status = 'Pending'", (vendor_user_id,))
+            active_bids = cursor.fetchone()['count']
+            
+            # Completed Jobs
+            cursor.execute("SELECT COUNT(*) as count FROM complaints WHERE selected_vendor_id = %s AND status = 'Resolved'", (vendor_user_id,))
+            completed_jobs = cursor.fetchone()['count']
+            
+            # Total Earnings (Sum of agreed prices for resolved jobs)
+            cursor.execute("""
+                SELECT SUM(q.price) as total 
+                FROM complaints c
+                JOIN quotations q ON c.id = q.complaint_id AND c.selected_vendor_id = q.vendor_id
+                WHERE c.selected_vendor_id = %s AND c.status = 'Resolved'
+            """, (vendor_user_id,))
+            earnings = cursor.fetchone()['total'] or 0
+            
+            return {
+                "active_bids": active_bids,
+                "completed_jobs": completed_jobs,
+                "total_earnings": float(earnings)
+            }
+        except Exception as e:
+            print(f"Error fetching vendor stats: {e}")
+            return {"active_bids": 0, "completed_jobs": 0, "total_earnings": 0}
         finally:
             cursor.close()
             conn.close()
@@ -296,24 +338,7 @@ class Complaint:
         conn.close()
         return data
 
-    @staticmethod
-    def get_by_vendor(vendor_user_id):
-        conn = get_db_connection()
-        if not conn: return []
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        query = """
-            SELECT c.*, u.name as citizen_name, cat.name as category_name 
-            FROM complaints c
-            JOIN users u ON c.user_id = u.id
-            JOIN categories cat ON c.category_id = cat.id
-            WHERE c.selected_vendor_id = %s
-            ORDER BY c.created_at DESC
-        """
-        cursor.execute(query, (vendor_user_id,))
-        data = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return data
+
 
     @staticmethod
     def update_status(id, status, resolution_notes=None):

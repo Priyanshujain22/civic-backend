@@ -45,6 +45,13 @@ def get_my_jobs():
     jobs = Complaint.get_by_vendor(request.user['id'])
     return success_response(data=jobs)
 
+@vendor_bp.route('/stats', methods=['GET'])
+@token_required
+@role_required('vendor')
+def get_stats():
+    stats = Complaint.get_vendor_stats(request.user['id'])
+    return success_response(data=stats)
+
 @vendor_bp.route('/complete', methods=['POST'])
 @token_required
 @role_required('vendor')
