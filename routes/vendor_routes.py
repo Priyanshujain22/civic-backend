@@ -45,6 +45,13 @@ def get_my_jobs():
     jobs = Complaint.get_by_vendor(request.user['id'])
     return success_response(data=jobs)
 
+@vendor_bp.route('/my-quotes', methods=['GET'])
+@token_required
+@role_required('vendor')
+def get_my_quotes():
+    quotes = Quotation.get_by_vendor(request.user['id'])
+    return success_response(data=quotes)
+
 @vendor_bp.route('/stats', methods=['GET'])
 @token_required
 @role_required('vendor')

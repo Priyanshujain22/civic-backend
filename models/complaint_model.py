@@ -70,6 +70,7 @@ class Complaint:
             query = """
                 SELECT c.*, cat.name as category_name, v.business_name as vendor_name,
                        (SELECT price FROM quotations WHERE complaint_id = c.id AND status = 'Approved' LIMIT 1) as agreed_price,
+                       (SELECT COUNT(*) FROM quotations WHERE complaint_id = c.id) as quote_count,
                        f.rating as user_rating
                 FROM complaints c
                 JOIN categories cat ON c.category_id = cat.id
