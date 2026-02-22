@@ -59,3 +59,21 @@ def mark_complete():
         return success_response(message="Job marked as completed")
     else:
         return error_response("Failed to update status", 500)
+
+@vendor_bp.route('/update', methods=['POST'])
+@token_required
+@role_required('vendor')
+def post_update():
+    from models.job_update_model import JobUpdate
+    data = request.json
+    complaint_id = data.get('complaint_id')
+    message = data.get('message')
+    image_url = data.get('image_url')
+    
+    if not complaint_id or not message:
+        return error_response("Complaint ID and Message are required", 400)
+        
+    if JobUpdate.create(complaint_id, request.user['id'], message, image_url):
+        return success_response(message="Progress update posted successfully")
+    else:
+        return error_response("Failed to post update", 500)

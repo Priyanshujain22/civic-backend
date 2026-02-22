@@ -64,3 +64,10 @@ def approve_quote(complaint_id):
         return success_response(message="Quotation approved and vendor hired")
     else:
         return error_response("Approval failed", 500)
+
+@complaint_bp.route('/complaints/<int:complaint_id>/updates', methods=['GET'])
+@token_required
+def get_complaint_updates(complaint_id):
+    from models.job_update_model import JobUpdate
+    updates = JobUpdate.get_by_complaint(complaint_id)
+    return success_response(data=updates)

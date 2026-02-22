@@ -116,6 +116,21 @@ def run_db_migrations():
             );
         """)
 
+        # Ensure job_updates table exists
+        print("Ensuring job_updates table exists...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS job_updates (
+                id SERIAL PRIMARY KEY,
+                complaint_id INT NOT NULL,
+                vendor_id INT NOT NULL,
+                message TEXT NOT NULL,
+                image_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+                FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        """)
+
         # Seed Test Users
         print("Seeding test users (Officers & Vendors)...")
         # Direct passwords as requested by user
