@@ -176,7 +176,7 @@ class Complaint:
     @staticmethod
     def assign_vendor(complaint_id, vendor_id):
         conn = get_db_connection()
-        if not conn: return False, "Database connection failed"
+        if not conn: return False
         try:
             cursor = conn.cursor()
             query = """
@@ -189,12 +189,11 @@ class Complaint:
             """
             cursor.execute(query, (vendor_id, complaint_id))
             conn.commit()
-            return True, "Complaint assigned to vendor"
+            return True
         except Exception as e:
-            error_msg = f"Error assigning vendor: {str(e)}"
-            print(error_msg)
+            print(f"Error assigning vendor: {e}")
             conn.rollback()
-            return False, error_msg
+            return False
         finally:
             cursor.close()
             conn.close()
