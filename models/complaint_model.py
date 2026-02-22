@@ -249,11 +249,33 @@ class Complaint:
         return data
 
     @staticmethod
+    def get_by_vendor(vendor_user_id):
+        conn = get_db_connection()
+        if not conn: return []
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = """
+            SELECT c.*, u.name as citizen_name, cat.name as category_name 
+            FROM complaints c
+            JOIN users u ON c.user_id = u.id
+            JOIN categories cat ON c.category_id = cat.id
+            WHERE c.selected_vendor_id = %s
+            ORDER BY c.created_at DESC
+        """
+        cursor.execute(query, (vendor_user_id,))
+        data = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return data
+
+    @staticmethod
     def update_status(id, status, resolution_notes=None):
         conn = get_db_connection()
-        if not conn: return False
+        if not conn: 
+            print("DB Connection failed in update_status")
+            return False
         try:
             cursor = conn.cursor()
+            print(f"DEBUG: Updating complaint {id} to status {status}")
             if status == 'Resolved' and resolution_notes:
                 query = "UPDATE complaints SET status = %s, resolution_notes = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
                 cursor.execute(query, (status, resolution_notes, id))
