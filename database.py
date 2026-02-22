@@ -87,6 +87,35 @@ def run_db_migrations():
             );
         """)
 
+        # Ensure quotations table exists
+        print("Ensuring quotations table exists...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS quotations (
+                id SERIAL PRIMARY KEY,
+                complaint_id INT NOT NULL,
+                vendor_id INT NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                estimated_time VARCHAR(50),
+                status VARCHAR(20) DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
+                FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        """)
+
+        # Ensure feedback table exists
+        print("Ensuring feedback table exists...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS feedback (
+                id SERIAL PRIMARY KEY,
+                complaint_id INT NOT NULL,
+                rating INT CHECK (rating BETWEEN 1 AND 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE
+            );
+        """)
+
         # Seed Test Users
         print("Seeding test users (Officers & Vendors)...")
         # Direct passwords as requested by user
