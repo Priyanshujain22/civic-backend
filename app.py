@@ -60,6 +60,7 @@ if all([auth_bp, complaint_bp, admin_bp, officer_bp, vendor_bp]):
     app.register_blueprint(officer_bp, url_prefix='/api/officer')
     app.register_blueprint(vendor_bp, url_prefix='/api/vendor')
     # Run migrations once on startup
+    print("🚀 App starting... Running database migrations...")
     run_db_migrations()
 
 @app.route('/')
