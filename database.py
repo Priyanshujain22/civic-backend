@@ -78,14 +78,13 @@ def run_db_migrations():
         hashed_pw = generate_password_hash('password123')
 
         test_users = [
-            # Officers
-            ('Road Off', 'road@test.com', 'officer', 'Road Damage'),
-            ('Garbage Off', 'garbage@test.com', 'officer', 'Garbage'),
+            # Admin & Officers
+            ('System Admin', 'admin@system.com', 'admin', 'General'),
             ('General Off', 'general@test.com', 'officer', 'General'),
+            ('Road Off', 'road@test.com', 'officer', 'Road Damage'),
             # Vendors
+            ('Waste Expert', 'waste@test.com', 'vendor', 'Waste Management'),
             ('Fixer Ltd', 'fixer@test.com', 'vendor', 'Road Damage'),
-            ('Clean Co', 'clean@test.com', 'vendor', 'Garbage'),
-            ('Waste Experts', 'waste@test.com', 'vendor', 'Waste Management'),
             ('Test Vendor', 'vendor@test.com', 'vendor', 'General')
         ]
 
@@ -94,16 +93,19 @@ def run_db_migrations():
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             user_row = cursor.fetchone()
             
+            # Special case for admin password fallback
+            current_pw = hashed_pw if email != 'admin@system.com' else 'admin@123'
+
             if not user_row:
                 cursor.execute(
                     "INSERT INTO users (name, email, password, role, department) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-                    (name, email, hashed_pw, role, dept)
+                    (name, email, current_pw, role, dept)
                 )
                 uid = cursor.fetchone()[0]
             else:
                 uid = user_row[0]
                 # Force password and department update for test accounts to ensure login works
-                cursor.execute("UPDATE users SET password = %s, department = %s WHERE id = %s", (hashed_pw, dept, uid))
+                cursor.execute("UPDATE users SET password = %s, department = %s WHERE id = %s", (current_pw, dept, uid))
 
             # Always ensure vendor profile exists if role is vendor
             if role == 'vendor':
@@ -120,3 +122,6 @@ def run_db_migrations():
         if conn: conn.rollback()
     finally:
         if conn: conn.close()
+
+if __name__ == "__main__":
+    run_db_migrations()
