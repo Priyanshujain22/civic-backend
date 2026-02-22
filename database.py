@@ -85,24 +85,33 @@ def run_db_migrations():
             # Vendors
             ('Fixer Ltd', 'fixer@test.com', 'vendor', 'Road Damage'),
             ('Clean Co', 'clean@test.com', 'vendor', 'Garbage'),
+            ('Waste Experts', 'waste@test.com', 'vendor', 'Waste Management'),
             ('Test Vendor', 'vendor@test.com', 'vendor', 'General')
         ]
 
         for name, email, role, dept in test_users:
-            # Check if user exists
+            # Get or create user
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-            exists = cursor.fetchone()
-            if not exists:
+            user_row = cursor.fetchone()
+            
+            if not user_row:
                 cursor.execute(
                     "INSERT INTO users (name, email, password, role, department) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                     (name, email, hashed_pw, role, dept)
                 )
                 uid = cursor.fetchone()[0]
-                if role == 'vendor':
-                    cursor.execute(
-                        "INSERT INTO vendors (user_id, business_name, service_type, verified) VALUES (%s, %s, %s, TRUE) ON CONFLICT (user_id) DO NOTHING",
-                        (uid, name, dept)
-                    )
+            else:
+                uid = user_row[0]
+                # Update department if it's an officer
+                if role == 'officer':
+                    cursor.execute("UPDATE users SET department = %s WHERE id = %s", (dept, uid))
+
+            # Always ensure vendor profile exists if role is vendor
+            if role == 'vendor':
+                cursor.execute(
+                    "INSERT INTO vendors (user_id, business_name, service_type, verified) VALUES (%s, %s, %s, TRUE) ON CONFLICT (user_id) DO UPDATE SET service_type = EXCLUDED.service_type, business_name = EXCLUDED.business_name",
+                    (uid, name, dept)
+                )
         
         conn.commit()
         cursor.close()

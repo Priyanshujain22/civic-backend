@@ -82,14 +82,15 @@ class User:
             
             if role == 'vendor':
                 query = """
-                    SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at, v.service_type
+                    SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at, v.service_type, v.business_name
                     FROM users u
-                    JOIN vendors v ON u.id = v.user_id
+                    LEFT JOIN vendors v ON u.id = v.user_id
                     WHERE u.role = 'vendor'
                 """
                 params = []
                 if category:
-                    query += " AND (v.service_type = %s OR v.service_type = 'General' OR v.service_type IS NULL)"
+                    query += " AND (v.service_type = %s OR v.service_type = 'General' OR v.service_type IS NULL OR v.service_type = 'Waste Management' AND %s = 'Garbage')"
+                    params.append(category)
                     params.append(category)
                 cursor.execute(query, params)
             elif role == 'officer':
