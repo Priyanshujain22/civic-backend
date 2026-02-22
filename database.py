@@ -102,9 +102,8 @@ def run_db_migrations():
                 uid = cursor.fetchone()[0]
             else:
                 uid = user_row[0]
-                # Update department if it's an officer
-                if role == 'officer':
-                    cursor.execute("UPDATE users SET department = %s WHERE id = %s", (dept, uid))
+                # Force password and department update for test accounts to ensure login works
+                cursor.execute("UPDATE users SET password = %s, department = %s WHERE id = %s", (hashed_pw, dept, uid))
 
             # Always ensure vendor profile exists if role is vendor
             if role == 'vendor':
