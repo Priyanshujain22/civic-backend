@@ -49,13 +49,15 @@ def assign_officer():
 def route_government():
     data = request.json
     complaint_id = data.get('complaint_id')
-    officer_id = data.get('officer_id')  # Optional now
+    officer_id = data.get('officer_id')
     if not complaint_id:
         return error_response("Complaint ID required", 400)
-    if Complaint.route_to_government(complaint_id, officer_id):
-        return success_response(message="Complaint routed to government")
+    
+    success, message = Complaint.route_to_government(complaint_id, officer_id)
+    if success:
+        return success_response(message=message)
     else:
-        return error_response("Routing failed", 500)
+        return error_response(message, 500)
 
 @admin_bp.route('/route/private', methods=['POST'])
 @token_required
@@ -65,10 +67,12 @@ def route_private():
     complaint_id = data.get('complaint_id')
     if not complaint_id:
         return error_response("Complaint ID required", 400)
-    if Complaint.route_to_private(complaint_id):
-        return success_response(message="Complaint routed to private marketplace")
+    
+    success, message = Complaint.route_to_private(complaint_id)
+    if success:
+        return success_response(message=message)
     else:
-        return error_response("Routing failed", 500)
+        return error_response(message, 500)
 
 @admin_bp.route('/route/vendor', methods=['POST'])
 @token_required

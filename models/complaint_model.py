@@ -115,7 +115,7 @@ class Complaint:
     @staticmethod
     def route_to_government(complaint_id, officer_id=None):
         conn = get_db_connection()
-        if not conn: return False
+        if not conn: return False, "Database connection failed"
         try:
             cursor = conn.cursor()
             if officer_id:
@@ -138,11 +138,12 @@ class Complaint:
                 """
                 cursor.execute(query, (complaint_id,))
             conn.commit()
-            return True
+            return True, "Complaint routed to government"
         except Exception as e:
-            print(f"Error routing to government: {e}")
+            error_msg = f"Error routing to government: {str(e)}"
+            print(error_msg)
             conn.rollback()
-            return False
+            return False, error_msg
         finally:
             cursor.close()
             conn.close()
@@ -150,7 +151,7 @@ class Complaint:
     @staticmethod
     def route_to_private(complaint_id):
         conn = get_db_connection()
-        if not conn: return False
+        if not conn: return False, "Database connection failed"
         try:
             cursor = conn.cursor()
             query = """
@@ -162,11 +163,12 @@ class Complaint:
             """
             cursor.execute(query, (complaint_id,))
             conn.commit()
-            return True
+            return True, "Complaint routed to private marketplace"
         except Exception as e:
-            print(f"Error routing to private: {e}")
+            error_msg = f"Error routing to private: {str(e)}"
+            print(error_msg)
             conn.rollback()
-            return False
+            return False, error_msg
         finally:
             cursor.close()
             conn.close()
