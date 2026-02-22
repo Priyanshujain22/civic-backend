@@ -72,9 +72,41 @@ def run_db_migrations():
         for cat in categories:
             cursor.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (cat,))
         
+        # Seed Test Users
+        print("Seeding test users (Officers & Vendors)...")
+        from werkzeug.security import generate_password_hash
+        hashed_pw = generate_password_hash('password123')
+
+        test_users = [
+            # Officers
+            ('Road Off', 'road@test.com', 'officer', 'Road Damage'),
+            ('Garbage Off', 'garbage@test.com', 'officer', 'Garbage'),
+            ('General Off', 'general@test.com', 'officer', 'General'),
+            # Vendors
+            ('Fixer Ltd', 'fixer@test.com', 'vendor', 'Road Damage'),
+            ('Clean Co', 'clean@test.com', 'vendor', 'Garbage'),
+            ('Test Vendor', 'vendor@test.com', 'vendor', 'General')
+        ]
+
+        for name, email, role, dept in test_users:
+            # Check if user exists
+            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            exists = cursor.fetchone()
+            if not exists:
+                cursor.execute(
+                    "INSERT INTO users (name, email, password, role, department) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                    (name, email, hashed_pw, role, dept)
+                )
+                uid = cursor.fetchone()[0]
+                if role == 'vendor':
+                    cursor.execute(
+                        "INSERT INTO vendors (user_id, business_name, service_type, verified) VALUES (%s, %s, %s, TRUE) ON CONFLICT (user_id) DO NOTHING",
+                        (uid, name, dept)
+                    )
+        
         conn.commit()
         cursor.close()
-        print("✅ Database migration successful.")
+        print("✅ Database migration and seeding successful.")
     except Exception as e:
         print(f"❌ Migration error: {e}")
         if conn: conn.rollback()
