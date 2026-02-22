@@ -94,3 +94,22 @@ def get_complaint_updates(complaint_id):
     from models.job_update_model import JobUpdate
     updates = JobUpdate.get_by_complaint(complaint_id)
     return success_response(data=updates)
+
+@complaint_bp.route('/complaints/<int:complaint_id>/status', methods=['POST'])
+@token_required
+def update_complaint_status(complaint_id):
+    # This unified route allows Officers and Vendors to dynamically update statuses
+    data = request.json
+    status = data.get('status')
+    resolution_notes = data.get('resolution_notes', '')
+
+    if not status:
+        return error_response("Status is required", 400)
+    
+    if status not in ['In Progress', 'Resolved']:
+        return error_response("Invalid status for direct update", 400)
+
+    if Complaint.update_status(complaint_id, status, resolution_notes):
+        return success_response(message=f"Status updated to {status}")
+    else:
+        return error_response("Failed to update status", 500)
