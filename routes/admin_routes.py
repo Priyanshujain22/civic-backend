@@ -83,10 +83,11 @@ def route_vendor():
     vendor_id = data.get('vendor_id')
     if not complaint_id or not vendor_id:
         return error_response("Complaint ID and Vendor ID required", 400)
-    if Complaint.assign_vendor(complaint_id, vendor_id):
-        return success_response(message="Complaint directly assigned to vendor")
+    success, message = Complaint.assign_vendor(complaint_id, vendor_id)
+    if success:
+        return success_response(message=message)
     else:
-        return error_response("Assignment failed", 500)
+        return error_response(message, 500)
 
 @admin_bp.route('/vendors/verify', methods=['POST'])
 @token_required
