@@ -67,10 +67,11 @@ class Complaint:
         try:
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             query = """
-                SELECT c.*, cat.name as category_name, v.name as vendor_name
+                SELECT c.*, cat.name as category_name, v.business_name as vendor_name,
+                       (SELECT price FROM quotations WHERE complaint_id = c.id AND status = 'Approved' LIMIT 1) as agreed_price
                 FROM complaints c
                 JOIN categories cat ON c.category_id = cat.id
-                LEFT JOIN users v ON c.selected_vendor_id = v.id
+                LEFT JOIN vendors v ON c.selected_vendor_id = v.user_id
                 WHERE c.user_id = %s
                 ORDER BY c.created_at DESC
             """
